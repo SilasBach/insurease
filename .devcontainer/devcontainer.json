@@ -1,0 +1,90 @@
+{
+  "name": "InsurEase",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // JS, CSS
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        // Python
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        // Markdown documentation
+        "DavidAnson.vscode-markdownlint",
+        //Docker
+        "ms-azuretools.vscode-docker",
+        "exiasr.hadolint",
+        // AI and Productivity
+        "github.copilot",
+        "github.copilot-chat",
+        "njpwerner.autodocstring",
+        "mongodb.mongodb-vscode"
+      ],
+      "settings": {
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": true
+          }
+        },
+        "[javascriptreact]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": true
+          }
+        },
+        "[json]": {
+          "editor.rulers": [80],
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": true
+          }
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": true
+          }
+        },
+        "[python]": {
+          "editor.rulers": [80],
+          "editor.tabSize": 4,
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.codeActionsOnSave": {
+            "source.fixAll": true,
+            "source.organizeImports": true
+          }
+        },
+        "[yaml]": {
+          "editor.rulers": [80],
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+
+        "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+
+        "files.associations": {
+          "*.css": "tailwindcss"
+        },
+        "css.validate": false
+      },
+      "forwardPorts": [
+        3000, // Frontend port
+        8000  // Backend port
+      ]
+    }
+  }
+}
