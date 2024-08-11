@@ -5,6 +5,7 @@ import {
   Navigate,
 } from 'react-router-dom';
 import Login from './components/Login'; // Importing Login component
+import UpdateUser from './components/UpdateUser'; // Importing UpdateUser component for updating user details
 import { useAuth } from './hooks/useAuth'; // Importing useAuth hook for user authentication
 
 function App() {
@@ -33,6 +34,16 @@ function App() {
           <Route
             path="/login"
             element={!user ? <Login onLogin={login} /> : <Navigate to="/gpt" />}
+          />
+          <Route
+            path="/update-user"
+            element={
+              user ? (
+                <UpdateUser userId={user.user_id} />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
           />
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>

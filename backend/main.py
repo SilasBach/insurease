@@ -7,6 +7,7 @@ from fastapi import Body, Cookie, Depends, FastAPI, HTTPException, Response, sta
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pymongo import ReturnDocument
 from starlette.requests import Request
 
 # Initialize FastAPI application
@@ -125,3 +126,69 @@ async def check_auth(request: Request):
     except HTTPException:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
+
+# Endpoint to retrieve a single user by ID
+@app.get("/users/{id}", response_model=UserModel, response_model_by_alias=False)
+async def show_user(id: str, current_user: dict = Depends(get_current_user)):
+    if str(current_user["_id"]) != id and current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to view this user")
+    try:
+        user = await user_collection.find_one({"_id": ObjectId(id)})
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while fetching the user: {str(e)}",
+        )
+    if user is None:
+        raise HTTPException(status_code=404, detail=f"User {id} not found")
+    return user
+
+
+# Endpoint to update a user
+@app.put("/users/{id}", response_model=UserModel, response_model_by_alias=False)
+async def update_user(
+    id: str,
+    user: UpdateUserModel = Body(...),
+    current_user: dict = Depends(get_current_user),
+):
+    if str(current_user["_id"]) != id and current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403, detail="Not authorized to update this user"
+        )
+
+    if current_user["role"] != "admin" and "role" in user.model_dump(
+        exclude_unset=True
+    ):
+        raise HTTPException(status_code=403, detail="Not authorized to change role")
+
+    user_data = {
+        k: v for k, v in user.model_dump(by_alias=True).items() if v is not None
+    }
+    if "password" in user_data:
+        user_data["password"] = hash_password(user_data["password"])
+
+    user_data["updatedAt"] = datetime.utcnow()
+
+    if len(user_data) >= 1:
+        try:
+            update_result = await user_collection.find_one_and_update(
+                {"_id": ObjectId(id)},
+                {"$set": user_data},
+                return_document=ReturnDocument.AFTER,
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"An error occurred while updating the user: {str(e)}",
+            )
+
+        if update_result is None:
+            raise HTTPException(status_code=404, detail=f"User {id} not found")
+
+        return update_result
+
+    existing_user = await user_collection.find_one({"_id": ObjectId(id)})
+    if existing_user is None:
+        raise HTTPException(status_code=404, detail=f"User {id} not found")
+
+    return existing_user
