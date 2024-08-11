@@ -63,6 +63,17 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
+  const logout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      setUser(null);
+    } catch (error) {
+      console.error('An error occurred during logout:', error);
+    }
+  };
   const fetchUserData = useCallback(async (userId: string): Promise<User> => {
     if (userCache.current[userId]) {
       return userCache.current[userId];
@@ -126,6 +137,7 @@ export const useAuth = () => {
   return {
     user,
     login,
+    logout,
     loading,
     checkAuthStatus,
     fetchUserData,

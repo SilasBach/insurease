@@ -116,6 +116,18 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
     }
 
 
+@app.post("/logout")
+async def logout():
+    response = JSONResponse(content={"message": "Logged out successfully"})
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,  # Use this in production with HTTPS
+        samesite="None",
+    )
+    return response
+
+
 @app.get("/check-auth")
 async def check_auth(request: Request):
     try:
