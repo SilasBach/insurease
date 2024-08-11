@@ -28,6 +28,9 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 # Add poetry to PATH
 ENV PATH="/root/.local/bin:$PATH"
 
+# Configure Poetry to create the virtual environment in the project directory
+RUN poetry config virtualenvs.in-project true
+
 # Install Node.js
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs

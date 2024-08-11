@@ -4,6 +4,7 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
+  // "postCreateCommand": "/bin/bash ./.devcontainer/post_create.sh",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -86,5 +87,7 @@
         8000  // Backend port
       ]
     }
-  }
+  },
+  "remoteEnv": {"ENV_FILE": "/workspaces/STChatbot/.devcontainer/secrets.env"},
+  "postCreateCommand": "if [ -f \"$ENV_FILE\" ]; then set -a && . \"$ENV_FILE\" && set +a; fi"
 }
