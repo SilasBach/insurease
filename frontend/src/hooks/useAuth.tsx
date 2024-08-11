@@ -63,6 +63,39 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const register = async (
+    registrationData: RegistrationData,
+  ): Promise<void> => {
+    setLoading(true);
+    try {
+      const registerResponse = await fetch(`${API_BASE_URL}/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+        credentials: 'include',
+      });
+
+      if (!registerResponse.ok) {
+        const errorData = await registerResponse.json();
+        throw new Error(errorData.detail || 'Registration failed');
+      }
+
+      await login({
+        email: registrationData.email,
+        password: registrationData.password,
+      });
+    } catch (error) {
+      console.error('An error occurred during registration:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await fetch(`${API_BASE_URL}/logout`, {
@@ -137,9 +170,11 @@ export const useAuth = () => {
   return {
     user,
     login,
+    register,
     logout,
     loading,
     checkAuthStatus,
     fetchUserData,
     updateUser,
+  };
   };

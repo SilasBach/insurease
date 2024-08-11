@@ -5,6 +5,8 @@ import {
   Navigate,
 } from 'react-router-dom';
 import Login from './components/Login'; // Importing Login component
+import Register from './components/Register'; // Importing Register component
+import Nav from './components/Nav'; // Importing Nav component for navigation bar
 import UpdateUser from './components/UpdateUser'; // Importing UpdateUser component for updating user details
 import { useAuth } from './hooks/useAuth'; // Importing useAuth hook for user authentication
 
@@ -34,6 +36,16 @@ function App() {
           <Route
             path="/login"
             element={!user ? <Login onLogin={login} /> : <Navigate to="/gpt" />}
+          />
+          <Route
+            path="/register"
+            element={
+              !user ? (
+                <Register onRegistration={register} />
+              ) : (
+                <Navigate to="/gpt" />
+              )
+            }
           />
           <Route
             path="/update-user"

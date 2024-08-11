@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pymongo import ReturnDocument
+from pymongo.errors import DuplicateKeyError
 from starlette.requests import Request
 
 # Initialize FastAPI application
@@ -137,6 +138,36 @@ async def check_auth(request: Request):
         return {"user_id": str(current_user["_id"]), "role": current_user["role"]}
     except HTTPException:
         raise HTTPException(status_code=401, detail="Not authenticated")
+
+
+# Endpoint to create a new user
+@app.post(
+    "/users/",
+    response_model=UserModel,
+    status_code=status.HTTP_201_CREATED,
+    response_model_by_alias=False,
+)
+async def create_user(user: UserModel = Body(...)):
+    try:
+        user_dict = user.model_dump(by_alias=True, exclude=["id"])
+        user_dict["password"] = hash_password(user_dict["password"])
+        new_user = await user_collection.insert_one(user_dict)
+    except DuplicateKeyError:
+        raise HTTPException(
+            status_code=400, detail="User with this email already exists"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while creating the user: {str(e)}",
+        )
+
+    created_user = await user_collection.find_one({"_id": new_user.inserted_id})
+    if not created_user:
+        raise HTTPException(
+            status_code=404, detail="User was created but could not be retrieved"
+        )
+    return created_user
 
 
 # Endpoint to retrieve a single user by ID
