@@ -107,6 +107,39 @@ export const useAuth = () => {
       console.error('An error occurred during logout:', error);
     }
   };
+
+  const comparePolicies = async (
+    policy1: string,
+    policy2: string,
+    query: string,
+  ): Promise<string> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/compare-policies`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ policy1, policy2, query }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server response:', errorData);
+        throw new Error(errorData.detail || 'Failed to compare policies');
+      }
+
+      const data = await response.json();
+      return data.answer;
+    } catch (error) {
+      console.error('Full error object:', error);
+      if (error instanceof Error) {
+        throw new Error(`Error comparing policies: ${error.message}`);
+      } else {
+        throw new Error('An unknown error occurred while comparing policies');
+      }
+    }
+  };
   const fetchUserData = useCallback(async (userId: string): Promise<User> => {
     if (userCache.current[userId]) {
       return userCache.current[userId];
@@ -176,5 +209,6 @@ export const useAuth = () => {
     checkAuthStatus,
     fetchUserData,
     updateUser,
+    comparePolicies,
   };
   };

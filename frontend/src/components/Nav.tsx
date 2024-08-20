@@ -27,6 +27,14 @@ function Nav({ user, logout }: NavProps) {
                   >
                     Update Profile
                   </NavLink>
+                  <NavLink
+                    to="/gpt"
+                    className="mr-4 text-white hover:text-blue-300"
+                  >
+                    Chatbot
+                  </NavLink>
+                </>
+              )}
               <button
                 onClick={handleLogout}
                 className="text-white hover:text-blue-300"

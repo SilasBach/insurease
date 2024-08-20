@@ -3,10 +3,12 @@ from datetime import datetime, timedelta
 
 import bcrypt
 import jwt
+from compare_query import compare_policies_query
 from fastapi import Body, Cookie, Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 from starlette.requests import Request
@@ -42,6 +44,32 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(
         plain_password.encode("utf-8"), hashed_password.encode("utf-8")
     )
+
+class ComparisonRequest(BaseModel):
+    policy1: str
+    policy2: str
+    query: str
+
+
+@app.post("/compare-policies")
+async def compare_policies(request: ComparisonRequest):
+    try:
+        # Add .pdf extension to policy names
+        policy1_with_extension = f"{request.policy1}.pdf"
+        policy2_with_extension = f"{request.policy2}.pdf"
+
+        answer = compare_policies_query(
+            policy1_with_extension,
+            policy2_with_extension,
+            request.query,
+        )
+        return {"answer": answer}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while comparing policies: {str(e)}",
+        )
+
 
 # OAuth2 token URL and scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)

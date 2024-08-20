@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 import Login from './components/Login'; // Importing Login component
 import Register from './components/Register'; // Importing Register component
+import Gpt from './components/gpt'; // Importing Gpt component for chatbot interface
 import Nav from './components/Nav'; // Importing Nav component for navigation bar
 import UpdateUser from './components/UpdateUser'; // Importing UpdateUser component for updating user details
 import { useAuth } from './hooks/useAuth'; // Importing useAuth hook for user authentication
@@ -46,6 +47,10 @@ function App() {
                 <Navigate to="/gpt" />
               )
             }
+          />
+          <Route
+            path="/gpt"
+            element={user ? <Gpt /> : <Navigate to="/login" />}
           />
           <Route
             path="/update-user"
