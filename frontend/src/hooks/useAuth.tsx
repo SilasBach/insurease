@@ -140,6 +140,36 @@ export const useAuth = () => {
       }
     }
   };
+
+  const askQuestion = async (question: string): Promise<string> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/question`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server response:', errorData);
+        throw new Error(errorData.detail || 'Failed to get answer');
+      }
+
+      const data = await response.json();
+      return data.answer;
+    } catch (error) {
+      console.error('Full error object:', error);
+      if (error instanceof Error) {
+        throw new Error(`Error asking question: ${error.message}`);
+      } else {
+        throw new Error('An unknown error occurred while asking the question');
+      }
+    }
+  };
+
   const fetchUserData = useCallback(async (userId: string): Promise<User> => {
     if (userCache.current[userId]) {
       return userCache.current[userId];
@@ -207,6 +237,7 @@ export const useAuth = () => {
     logout,
     loading,
     checkAuthStatus,
+    askQuestion,
     fetchUserData,
     updateUser,
     comparePolicies,

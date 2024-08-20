@@ -8,6 +8,7 @@ from fastapi import Body, Cookie, Depends, FastAPI, HTTPException, Response, sta
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from information_query import process_query
 from pydantic import BaseModel
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
@@ -44,6 +45,25 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(
         plain_password.encode("utf-8"), hashed_password.encode("utf-8")
     )
+
+
+class QuestionRequest(BaseModel):
+    question: str
+
+
+# Endpoint for processing questions using the chatbot
+@app.post("/question")
+async def ask(request: QuestionRequest):
+    try:
+        answer = process_query(request.question)
+
+        return {"answer": answer}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while processing the question: {str(e)}",
+        )
+
 
 class ComparisonRequest(BaseModel):
     policy1: str

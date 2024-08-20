@@ -10,9 +10,18 @@ python = "^3.10"
 datetime = "^5.4"
 fastapi = "^0.105.0"
 uvicorn = "^0.24.0.post1"
+pypdf = "^4.0.1"
 pymongo = "^4.6.1"
+motor = "^3.3.2"
+pydantic = {extras = ["email"], version = "^2.5.3"}
 pyjwt = {extras = ["encode"], version = "^2.8.0"}
+python-multipart = "^0.0.9"
 requests = "^2.32.3"
+llama-index-agent-openai = "^0.2.9"
+llama-index = "^0.10.62"
+llama-index-readers-smart-pdf-loader = "^0.1.4"
+pypdf2 = "^3.0.1"
+pycryptodome = "^3.20.0"
 bcrypt = "^4.2.0"
 
 

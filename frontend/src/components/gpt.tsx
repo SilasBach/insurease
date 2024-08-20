@@ -43,6 +43,7 @@ const Gpt: React.FC = () => {
     try {
       let result: string;
 
+      if (isCompareMode) {
         // Validate inputs for compare mode
         if (!company1 || !pdf1 || !company2 || !pdf2) {
           throw new Error('Please select both policies for comparison');
@@ -50,6 +51,14 @@ const Gpt: React.FC = () => {
         const policy1 = `${company1}/${pdf1}`;
         const policy2 = `${company2}/${pdf2}`;
         result = await comparePolicies(policy1, policy2, question);
+      } else {
+        // Validate inputs for question mode
+        if (!company1 || !pdf1) {
+          throw new Error('Please select a company and policy');
+        }
+        const formattedQuestion = `${company1}, ${pdf1}, "${question}"`;
+        result = await askQuestion(formattedQuestion);
+      }
 
       setAnswer(result);
     } catch (error) {
@@ -63,11 +72,13 @@ const Gpt: React.FC = () => {
     }
   }, [
     question,
+    isCompareMode,
     company1,
     pdf1,
     company2,
     pdf2,
     comparePolicies,
+    askQuestion,
   ]);
 
   // Effect to parse markdown and sanitize HTML when answer changes
@@ -116,6 +127,20 @@ const Gpt: React.FC = () => {
           Q&A and Policy comparison
         </h1>
 
+        {/* Toggle switch for mode selection */}
+        <div className="mb-4 flex items-center justify-center">
+          <label className="mr-2 text-white">Policy question</label>
+          <label className="relative inline-flex cursor-pointer items-center">
+            <input
+              type="checkbox"
+              className="peer sr-only"
+              checked={isCompareMode}
+              onChange={() => setIsCompareMode(!isCompareMode)}
+            />
+            <div className="peer relative h-6 w-11 rounded-full bg-gray-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-blue-800"></div>
+          </label>
+          <label className="ml-2 text-white">Compare Policies</label>
+        </div>
 
         {/* Company and Policy selection for the first policy */}
         <div className="mb-4 flex justify-between">
@@ -190,6 +215,11 @@ const Gpt: React.FC = () => {
           <input
             type="text"
             className="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-white focus:border-blue-600 focus:text-white focus:outline-none focus:ring-0 dark:focus:border-blue-500"
+            placeholder={
+              isCompareMode
+                ? 'Specify comparison ex. Parking damage'
+                : 'Specify question ex. Young drivers'
+            }
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
           />
@@ -197,6 +227,7 @@ const Gpt: React.FC = () => {
             className="mt-6 w-full rounded bg-blue-500 py-2 text-[18px] text-white transition-colors duration-300 hover:bg-blue-600"
             onClick={handleSubmit}
           >
+            {isCompareMode ? 'Compare Policies' : 'Send Question'}
           </button>
         </div>
       </div>
