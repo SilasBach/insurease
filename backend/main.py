@@ -370,6 +370,20 @@ async def create_user(user: UserModel = Body(...)):
     return created_user
 
 
+# Endpoint to list all users
+@app.get("/users/", response_model=UserCollection, response_model_by_alias=False)
+async def list_users(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to list users")
+    try:
+        users = await user_collection.find().to_list(1000)
+        return UserCollection(users=users)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"An error occurred while fetching users: {str(e)}"
+        )
+
+
 # Endpoint to retrieve a single user by ID
 @app.get("/users/{id}", response_model=UserModel, response_model_by_alias=False)
 async def show_user(id: str, current_user: dict = Depends(get_current_user)):
@@ -435,3 +449,25 @@ async def update_user(
         raise HTTPException(status_code=404, detail=f"User {id} not found")
 
     return existing_user
+
+
+# Endpoint to delete a user
+@app.delete("/users/{id}", response_description="Delete a user")
+async def delete_user(id: str, current_user: dict = Depends(get_current_user)):
+    if str(current_user["_id"]) != id and current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this user"
+        )
+
+    try:
+        delete_result = await user_collection.delete_one({"_id": ObjectId(id)})
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while deleting the user: {str(e)}",
+        )
+
+    if delete_result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail=f"User {id} not found")
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -256,6 +256,59 @@ export const useAuth = () => {
       throw error;
     }
   };
+
+  const fetchUsers = async (): Promise<User[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error('Received invalid data format from server');
+        }
+        return data.map((user: any) => ({
+          id: user._id,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          bureauAffiliation: user.bureauAffiliation,
+          accountStatus: user.accountStatus,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          lastLogin: user.lastLogin,
+        }));
+      }
+      if (response.status === 401) {
+        setUser(null);
+      }
+      throw new Error('Failed to fetch users');
+    } catch (error) {
+      console.error('An error occurred while fetching users:', error);
+      throw error;
+    }
+  };
+
+  const deleteUser = async (userId: string): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setUser(null);
+        }
+        throw new Error('Failed to delete user');
+      }
+    } catch (error) {
+      console.error('An error occurred while deleting user:', error);
+      throw error;
+    }
+  };
+
   const uploadPolicy = async (
     file: File,
     fileName: string,
@@ -396,8 +449,10 @@ export const useAuth = () => {
     checkAuthStatus,
     askQuestion,
     fetchUserData,
+    fetchUsers,
     updateUser,
     comparePolicies,
+    deleteUser,
     uploadPolicy,
     deletePolicy,
     addCompany,
