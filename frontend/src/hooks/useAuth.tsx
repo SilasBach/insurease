@@ -21,7 +21,8 @@ export const useAuth = () => {
       });
       if (response.ok) {
         const userData = await response.json();
-        setUser(userData);
+        const policies = await fetchInsurances();
+        setUser({ ...userData, policies });
       } else {
         setUser(null);
       }
@@ -36,6 +37,30 @@ export const useAuth = () => {
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  const fetchInsurances = async (): Promise<{
+    [key: string]: string[];
+  }> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/policies/policies`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.policies;
+      } else {
+        throw new Error('Failed to fetch folder structure');
+      }
+    } catch (error) {
+      console.error(
+        'An error occurred while fetching folder structure:',
+        error,
+      );
+      throw error;
+    }
+  };
 
   const login = async (credentials: LoginCredentials): Promise<UserState> => {
     try {
@@ -54,8 +79,10 @@ export const useAuth = () => {
 
       if (response.ok) {
         const userData = await response.json();
-        setUser(userData);
-        return userData;
+        const insurances = await fetchInsurances();
+        const userWithInsurances = { ...userData, insurances };
+        setUser(userWithInsurances);
+        return userWithInsurances;
       } else {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Login failed');
@@ -229,6 +256,136 @@ export const useAuth = () => {
       throw error;
     }
   };
+  const uploadPolicy = async (
+    file: File,
+    fileName: string,
+    selectedInsurance: string,
+  ): Promise<{ success: boolean; message: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('insurance_name', selectedInsurance);
+    formData.append('policy_name', fileName);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/policies/upload-policy`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload Policy');
+      }
+
+      await checkAuthStatus(); // Refresh the user state to get the updated policies
+      return { success: true, message: 'Policy uploaded successfully' };
+    } catch (error) {
+      console.error('An error occurred while uploading the Policy:', error);
+      return {
+        success: false,
+        message: 'An error occurred while uploading the Policy',
+      };
+    }
+  };
+
+  const deletePolicy = async (
+    selectedInsurance: string,
+    filename: string,
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/policies/delete-policy/${selectedInsurance}/${filename}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete Policy');
+      }
+
+      await checkAuthStatus(); // Refresh the user state to get the updated policies
+      return { success: true, message: 'Policy deleted successfully' };
+    } catch (error) {
+      console.error('An error occurred while deleting the Policy:', error);
+      return {
+        success: false,
+        message: 'An error occurred while deleting the Policy',
+      };
+    }
+  };
+
+  const addCompany = async (
+    companyName: string,
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/insurance/insurance-companies`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: companyName }),
+          credentials: 'include',
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to add insurance company');
+      }
+
+      await checkAuthStatus(); // Refresh the user state to get the updated policies
+      return { success: true, message: 'Insurance company added successfully' };
+    } catch (error) {
+      console.error(
+        'An error occurred while adding the insurance company:',
+        error,
+      );
+      return {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'An error occurred while adding the insurance company',
+      };
+    }
+  };
+
+  const deleteCompany = async (
+    companyName: string,
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/insurance/insurance-companies/${companyName}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete insurance company');
+      }
+
+      await checkAuthStatus(); // Refresh the user state to get the updated policies
+      return {
+        success: true,
+        message: 'Insurance company deleted successfully',
+      };
+    } catch (error) {
+      console.error(
+        'An error occurred while deleting the insurance company:',
+        error,
+      );
+      return {
+        success: false,
+        message: 'An error occurred while deleting the insurance company',
+      };
+    }
+  };
 
   return {
     user,
@@ -241,5 +398,9 @@ export const useAuth = () => {
     fetchUserData,
     updateUser,
     comparePolicies,
+    uploadPolicy,
+    deletePolicy,
+    addCompany,
+    deleteCompany,
   };
   };

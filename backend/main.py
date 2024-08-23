@@ -1,4 +1,5 @@
 import os
+import shutil
 from datetime import datetime, timedelta
 
 import bcrypt
@@ -33,6 +34,8 @@ app.add_middleware(
 # JWT configuration for authentication
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM")
+
+BASE_PATH = Path("./insurance_policies")
 
 
 def hash_password(password: str) -> str:
@@ -131,6 +134,126 @@ async def get_current_user(access_token: str | None = Cookie(None)):
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+@app.post("/upload-policy")
+async def upload_pdf(
+    file: UploadFile = File(...),
+    insurance_name: str = Form(...),
+    policy_name: str = Form(...),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403, detail="Not authorized to upload insurance policies"
+        )
+
+    if not file.filename.endswith(".pdf"):
+        return JSONResponse(content={"message": "File must be a PDF"}, status_code=400)
+
+    insurance_path = os.path.join(BASE_PATH, insurance_name)
+    if not os.path.exists(insurance_path):
+        return JSONResponse(
+            content={"message": "Insurance company not found"}, status_code=404
+        )
+
+    # Construct the full file path
+    file_location = os.path.join(insurance_path, f"{policy_name}.pdf")
+
+    try:
+        os.makedirs(
+            os.path.dirname(file_location), exist_ok=True
+        )  # Ensure the directory exists
+        with open(file_location, "wb") as file_object:
+            shutil.copyfileobj(file.file, file_object)
+    except IOError:
+        return JSONResponse(
+            content={"message": "Failed to write file"}, status_code=500
+        )
+
+    return {"message": f"Successfully uploaded {insurance_name}/{policy_name}.pdf"}
+
+
+@app.delete("/delete-policy/{insurance_name}/{policy_name}")
+async def delete_policy(
+    insurance_name: str,
+    policy_name: str,
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete insurance policies"
+        )
+    # Construct the full file path
+    file_path = os.path.join(BASE_PATH, insurance_name, f"{policy_name}.pdf")
+
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Policy file not found")
+
+    try:
+        # Delete the file
+        os.remove(file_path)
+
+        return {"message": f"Successfully deleted {insurance_name}/{policy_name}.pdf"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while deleting the file: {str(e)}",
+        )
+
+
+# Define the InsuranceCompanyCreate model
+class InsuranceCompanyCreate(BaseModel):
+    name: str
+
+
+@app.post("/insurance-companies")
+async def add_insurance_company(
+    company: InsuranceCompanyCreate, current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403, detail="Not authorized to add insurance companies"
+        )
+
+    company_path = os.path.join(BASE_PATH, company.name)
+    if os.path.exists(company_path):
+        raise HTTPException(status_code=400, detail="Insurance company already exists")
+
+    try:
+        os.makedirs(company_path, exist_ok=True)
+        return {"message": f"Insurance company {company.name} added successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error adding insurance company: {str(e)}"
+        )
+
+
+@app.delete("/insurance-companies/{company_name}")
+async def delete_insurance_company(
+    company_name: str, current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete insurance companies"
+        )
+
+    company_path = os.path.join(BASE_PATH, company_name)
+    if not os.path.exists(company_path):
+        return JSONResponse(
+            content={"message": "Insurance company not found"}, status_code=404
+        )
+
+    try:
+        shutil.rmtree(company_path)
+        return {
+            "message": f"Insurance company {company_name} and all its policies deleted successfully"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting insurance company: {str(e)}"
+        )
+
+
 @app.post("/token")
 async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     user = await user_collection.find_one({"email": form_data.username})
@@ -163,6 +286,35 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
         "role": user["role"],
         "access_token": access_token,
     }
+
+
+@app.get("/policies")
+async def get_folder_structure():
+    base_path = Path("./insurance_policies")
+
+    if not base_path.exists() or not base_path.is_dir():
+        raise HTTPException(status_code=500, detail="Insurance folder not found")
+
+    structure = {}
+
+    try:
+        for company in base_path.iterdir():
+            if company.is_dir():
+                structure[company.name] = []
+                for pdf in company.glob("*.pdf"):
+                    # Remove the .pdf extension from the filename
+                    policy_name = pdf.stem
+                    structure[company.name].append(policy_name)
+    except PermissionError:
+        raise HTTPException(
+            status_code=500, detail="Permission denied when accessing insurance folders"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error reading folder structure: {str(e)}"
+        )
+
+    return {"policies": structure}
 
 
 @app.post("/logout")

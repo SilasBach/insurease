@@ -19,6 +19,7 @@ export interface UserState {
   token: string;
   user_id: string;
   role: string;
+  policies?: { [key: string]: string[] };
 }
 
 export interface User {
