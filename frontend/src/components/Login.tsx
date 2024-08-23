@@ -18,7 +18,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError(null);
     try {
       const user = await onLogin({ email, password });
+      if (user.role === 'admin') {
+        navigate('/admin_users');
+      } else {
         navigate('/gpt');
+      }
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);

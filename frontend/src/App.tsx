@@ -9,7 +9,9 @@ import Register from './components/Register'; // Importing Register component
 import Gpt from './components/gpt'; // Importing Gpt component for chatbot interface
 import Nav from './components/Nav'; // Importing Nav component for navigation bar
 import UpdateUser from './components/UpdateUser'; // Importing UpdateUser component for updating user details
+import AdminUsers from './components/admin_users'; // Importing Admin component for admin dashboard
 import { useAuth } from './hooks/useAuth'; // Importing useAuth hook for user authentication
+import AdminPolicies from './components/admin_policies';
 
 function App() {
   const { user, login, logout, loading, register } = useAuth();
@@ -62,7 +64,40 @@ function App() {
               )
             }
           />
-          <Route path="/" element={<Navigate to="/login" />} />
+          <Route
+            path="/admin_users"
+            element={
+              user && user.role === 'admin' ? (
+                <AdminUsers />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/"
+            element={
+              user ? (
+                user.role === 'admin' ? (
+                  <Navigate to="/admin_users" />
+                ) : (
+                  <Navigate to="/gpt" />
+                )
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/admin_policies"
+            element={
+              user && user.role === 'admin' ? (
+                <AdminPolicies />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
         </Routes>
       </div>
     </Router>
