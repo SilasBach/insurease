@@ -64,8 +64,8 @@ def prepare_policy_data(policy_path: str) -> Tuple[str, str]:
         policy_text = load_pdf_text(full_path)
         policy_name = Path(full_path).stem
         return policy_name, policy_text[
-            :8000
-        ]  # Limit text to 8000 characters to prevent potential issues with API limits.
+            :50000
+        ]  # Limit text to 50000 characters to prevent potential issues with API limits.
     except ValueError as e:
         raise ValueError(f"Error loading policy {policy_path}: {str(e)}")
 
@@ -97,6 +97,33 @@ def compare_policies_query(policy1_path: str, policy2_path: str, query: str) -> 
     Use specific examples and quotes from the policies where relevant.
     If there are areas where one policy offers better coverage or terms, mention it.
     Do NOT rely on prior knowledge. Only use the information provided in the policies.
+    Always answer in danish
+
+     the response shall be formatted like this:
+    example query: "What are the key differences between the two policies within Payment and fees?"
+
+    | Aspect | IF | TopDanmark |
+|--------|-------|------------|
+| Payment Method | Uses NemKonto for payouts and refunds | Uses NemKonto for payouts |
+-
+-
+| Fee Information | Refers to if.dk for information on fees | Mentions possibility of fees, details not provided in excerpt |
+-
+-
+| Payment Schedule | Provides information about last payment date | Not specified in the given excerpt |
+-
+-
+| Late Payment | Mentions consequences of late payment | Not specified in the given excerpt |
+-
+-
+## Key Differences
+1. IF provides more detailed information about payment processes and consequences of late payment.
+2. Both use NemKonto, but IF explicitly mentions using it for refunds as well.
+3. IF directs customers to their website for fee information, while TopDanmark's excerpt doesn't provide specific details about fees.
+
+## Summary
+Based on the provided information, IF's policy appears to be more transparent about payment processes and fees. However, it's important to note that the TopDanmark excerpt may not include all relevant information on this topic.
+
     """
 
     user_prompt = f"""
