@@ -1,10 +1,10 @@
 from pathlib import Path
 
+from app.compare_query import compare_policies_query
 from app.core.config import settings
+from app.information_query import process_query
 from app.models.chatbot import ComparisonRequest, QuestionRequest
-from backend.app.compare_query import compare_policies_query
 from fastapi import HTTPException
-from backend.app.information_query import process_query
 
 
 class ChatbotService:

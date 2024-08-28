@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 from app.core.config import settings
+from app.information_query import create_agents_and_databases
 from fastapi import HTTPException, UploadFile
 
 
@@ -28,16 +29,28 @@ class PolicyService:
                 shutil.copyfileobj(file.file, file_object)
         except IOError:
             raise HTTPException(status_code=500, detail="Failed to write file")
-
+        if settings.ENVIRONMENT != "test":
+            try:
+                create_agents_and_databases()
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Error creating agents and databases: {str(e)}",
+                )
         return f"Successfully uploaded {insurance_name}/{policy_name}.pdf"
 
     async def delete_policy(self, insurance_name: str, policy_name: str) -> str:
         file_path = self.BASE_PATH / insurance_name / f"{policy_name}.pdf"
+        index_path = (
+            self.BASE_PATH / insurance_name / f"{insurance_name}_{policy_name}_index"
+        )
 
         if not file_path.exists():
             raise HTTPException(status_code=404, detail="Policy file not found")
 
         try:
+            if settings.ENVIRONMENT != "test":
+                shutil.rmtree(index_path)
             os.remove(file_path)
             return f"Successfully deleted {insurance_name}/{policy_name}.pdf"
         except Exception as e:
