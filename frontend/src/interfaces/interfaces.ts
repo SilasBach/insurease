@@ -26,9 +26,12 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  bureauAffiliation: string;
   role: string;
+  bureauAffiliation?: string;
   accountStatus: string;
+  createdAt: string;
+  updatedAt: string;
+  lastLogin?: string;
 }
 
 export interface LoginCredentials {
@@ -39,4 +42,10 @@ export interface LoginCredentials {
 export interface RegistrationData extends LoginCredentials {
   fullName: string;
   bureauAffiliation: string;
+}
+
+export interface policies {
+  id: string;
+  filename: string;
+  uploadDate: string;
 }

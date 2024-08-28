@@ -88,6 +88,6 @@
       ]
     }
   },
-  "remoteEnv": {"ENV_FILE": "/workspaces/STChatbot/.devcontainer/secrets.env"},
+  "remoteEnv": {"ENV_FILE": "/workspaces/insurease/.devcontainer/secrets.env"},
   "postCreateCommand": "if [ -f \"$ENV_FILE\" ]; then set -a && . \"$ENV_FILE\" && set +a; fi"
 }
