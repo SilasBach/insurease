@@ -1,15 +1,19 @@
+import os
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    ENVIRONMENT: str = "test"
-    JWT_SECRET_KEY: str = "a_very_secret_key"
-    JWT_ALGORITHM: str = "HS256"
-    MONGODB_URL: str = "mongodb+srv://admin:admin@insurease.aclelf4.mongodb.net/"
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT")
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM")
+    MONGODB_URL: str = os.getenv("MONGO_URL")
     BASE_PATH: str = "./insurance_policies"
 
     class Config:
         env_file = ".env"
+        env_file_encoding = "utf-8"
+        case_sensitive = True
 
     @property
     def DATABASE(self) -> str:
