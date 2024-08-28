@@ -96,7 +96,7 @@ const Gpt: React.FC = () => {
 
   // Render the component
   return (
-    <div className="flex h-full w-1/2 flex-col p-8">
+    <div className="fixed h-5/6 w-5/6 flex-col p-8">
       {/* Answer Box */}
       <div className="mb-2 h-1/2">
         <div className="h-full w-full rounded-md border border-slate-600 bg-slate-800 bg-opacity-30 p-4 shadow-lg backdrop-blur-lg backdrop-filter">

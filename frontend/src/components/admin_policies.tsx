@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { ErrorMessage, SuccessMessage } from '../utils/msg';
+import dots_loading from '../assets/images/dots_loading.svg';
 
 const AdminPolicies: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -11,6 +12,7 @@ const AdminPolicies: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState<string>('');
   const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { user, uploadPolicy, deletePolicy, addCompany, deleteCompany } =
     useAuth();
   const insuranceCompanies = user?.policies ? Object.keys(user.policies) : [];
@@ -39,42 +41,61 @@ const AdminPolicies: React.FC = () => {
     event.preventDefault();
     setError(null);
     setSuccessMessage(null);
+    setLoading(true);
 
     if (!file || !fileName) {
       setError('Please select a file and provide a file name');
+      setLoading(false);
       return;
     }
     if (!selectedInsurance) {
       setError('Please select an insurance company');
+      setLoading(false);
       return;
     }
 
-    const result = await uploadPolicy(file, fileName, selectedInsurance);
-    if (result.success) {
-      setSuccessMessage(result.message);
-      setFile(null);
-      setFileName('');
-      setIsModalOpen(false);
-    } else {
-      setError(result.message);
+    try {
+      const result = await uploadPolicy(file, fileName, selectedInsurance);
+      if (result.success) {
+        setSuccessMessage(result.message);
+        setFile(null);
+        setFileName('');
+        setIsModalOpen(false);
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      setError('An error occurred while uploading the policy');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeletePolicy = async (filename: string) => {
     setError(null);
     setSuccessMessage(null);
+    setLoading(true);
 
     if (!selectedInsurance) {
       setError('Please select an insurance company');
+      setLoading(false);
       return;
     }
     if (window.confirm('Are you sure you want to delete this Policy?')) {
-      const result = await deletePolicy(selectedInsurance, filename);
-      if (result.success) {
-        setSuccessMessage(result.message);
-      } else {
-        setError(result.message);
+      try {
+        const result = await deletePolicy(selectedInsurance, filename);
+        if (result.success) {
+          setSuccessMessage(result.message);
+        } else {
+          setError(result.message);
+        }
+      } catch (err) {
+        setError('An error occurred while deleting the policy');
+      } finally {
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
   };
 
@@ -82,28 +103,38 @@ const AdminPolicies: React.FC = () => {
     event.preventDefault();
     setError(null);
     setSuccessMessage(null);
+    setLoading(true);
 
     if (!newCompanyName) {
       setError('Please enter a company name');
+      setLoading(false);
       return;
     }
 
-    const result = await addCompany(newCompanyName);
-    if (result.success) {
-      setSuccessMessage(result.message);
-      setNewCompanyName('');
-      setIsAddCompanyModalOpen(false);
-    } else {
-      setError(result.message);
+    try {
+      const result = await addCompany(newCompanyName);
+      if (result.success) {
+        setSuccessMessage(result.message);
+        setNewCompanyName('');
+        setIsAddCompanyModalOpen(false);
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      setError('An error occurred while adding the company');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteCompany = async () => {
     setError(null);
     setSuccessMessage(null);
+    setLoading(true);
 
     if (!selectedInsurance) {
       setError('Please select an insurance company to delete');
+      setLoading(false);
       return;
     }
 
@@ -112,13 +143,21 @@ const AdminPolicies: React.FC = () => {
         `Are you sure you want to delete the insurance company "${selectedInsurance}" and all its policies?`,
       )
     ) {
-      const result = await deleteCompany(selectedInsurance);
-      if (result.success) {
-        setSuccessMessage(result.message);
-        setSelectedInsurance('');
-      } else {
-        setError(result.message);
+      try {
+        const result = await deleteCompany(selectedInsurance);
+        if (result.success) {
+          setSuccessMessage(result.message);
+          setSelectedInsurance('');
+        } else {
+          setError(result.message);
+        }
+      } catch (err) {
+        setError('An error occurred while deleting the company');
+      } finally {
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
   };
 
@@ -137,10 +176,14 @@ const AdminPolicies: React.FC = () => {
     <div className="flex h-5/6 w-2/3 flex-col rounded-md border border-slate-600 bg-slate-800 bg-opacity-30 p-8 shadow-lg backdrop-blur-lg backdrop-filter">
       <div className="flex-grow overflow-hidden">
         <h1 className="mb-6 text-center text-3xl font-bold text-white">
-          Insurance Companys & Policies
+          Insurance Companies & Policies
         </h1>
 
-        {user ? (
+        {loading ? (
+          <div className="mt-4 flex items-center justify-center">
+            <img src={dots_loading} alt="Loading..." className="h-8 w-8" />
+          </div>
+        ) : user ? (
           <>
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center">
