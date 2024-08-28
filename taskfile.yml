@@ -34,7 +34,7 @@ tasks:
         source $ENV_FILE
         export $(grep -v '^#' $ENV_FILE | xargs)
       fi
-      poetry run uvicorn main:app --reload
+      poetry run uvicorn app.main:app --reload --port 8080
   
   start:
     deps:
@@ -45,3 +45,34 @@ tasks:
     cmds:
       - pkill -f "npm run dev"
       - pkill -f "uvicorn main:app --reload"
+
+  test:
+    cmds:
+      - task: test:backend:unit
+      - task: test:backend:integration
+      - task: test:frontend
+
+  test:backend:unit:
+    dir: backend
+    cmds:
+    - |
+      if [ -n "$ENV_FILE" ]; then
+        source $ENV_FILE
+        export $(grep -v '^#' $ENV_FILE | xargs)
+      fi
+      poetry run pytest app/tests/unit/ -v -s --html=app/tests/reports/unit/report.html
+
+  test:backend:integration:
+    dir: backend
+    cmds:
+    - |
+      if [ -n "$ENV_FILE" ]; then
+        source $ENV_FILE
+        export $(grep -v '^#' $ENV_FILE | xargs)
+      fi
+      poetry run pytest app/tests/integration/ -v -s --html=app/tests/reports/integration/report.html
+
+  test:frontend:
+    dir: frontend
+    cmds:
+      - npm run test

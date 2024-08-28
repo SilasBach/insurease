@@ -5,20 +5,20 @@ import {
   RegistrationData,
   User,
 } from '../interfaces/interfaces';
+import { API_BASE_URL } from '../config';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-export const useAuth = () => {
+export const useAuth = (skipCheck = false) => {
   const [user, setUser] = useState<UserState | null>(null);
   const [loading, setLoading] = useState(true);
   const userCache = useRef<{ [key: string]: User }>({});
 
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/check-auth`, {
         method: 'GET',
         credentials: 'include',
       });
+
       if (response.ok) {
         const userData = await response.json();
         const policies = await fetchInsurances();
@@ -32,15 +32,15 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    checkAuthStatus();
   }, []);
 
-  const fetchInsurances = async (): Promise<{
-    [key: string]: string[];
-  }> => {
+  useEffect(() => {
+    if (!skipCheck) {
+      checkAuthStatus();
+    }
+  }, [skipCheck, checkAuthStatus]);
+
+  const fetchInsurances = async (): Promise<{ [key: string]: string[] }> => {
     try {
       const response = await fetch(`${API_BASE_URL}/policies/policies`, {
         method: 'GET',
@@ -48,8 +48,13 @@ export const useAuth = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        return data.policies;
+        const text = await response.text();
+        if (text) {
+          const data = JSON.parse(text);
+          return data.policies;
+        } else {
+          throw new Error('Empty response body');
+        }
       } else {
         throw new Error('Failed to fetch folder structure');
       }
@@ -95,9 +100,8 @@ export const useAuth = () => {
   const register = async (
     registrationData: RegistrationData,
   ): Promise<void> => {
-    setLoading(true);
     try {
-      const registerResponse = await fetch(`${API_BASE_URL}/users`, {
+      const registerResponse = await fetch(`${API_BASE_URL}/users/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +145,7 @@ export const useAuth = () => {
     query: string,
   ): Promise<string> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/compare-policies`, {
+      const response = await fetch(`${API_BASE_URL}/chatbot/compare-policies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +174,7 @@ export const useAuth = () => {
 
   const askQuestion = async (question: string): Promise<string> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/question`, {
+      const response = await fetch(`${API_BASE_URL}/chatbot/question`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -178,7 +182,6 @@ export const useAuth = () => {
         body: JSON.stringify({ question }),
         credentials: 'include',
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Server response:', errorData);
@@ -450,6 +453,7 @@ export const useAuth = () => {
     askQuestion,
     fetchUserData,
     fetchUsers,
+    fetchInsurances,
     updateUser,
     comparePolicies,
     deleteUser,
@@ -458,4 +462,4 @@ export const useAuth = () => {
     addCompany,
     deleteCompany,
   };
-  };
+};
